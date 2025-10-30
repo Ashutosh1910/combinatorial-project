@@ -237,7 +237,7 @@ def generate():
     layouts = generate_layouts(rooms, plot_w, plot_h, max_layouts=max_layouts, max_attempts=max_layouts*50)
 
     lid = str(uuid.uuid4())
-    STORAGE[lid] = {"layouts": layouts, "plot_w": plot_w, "plot_h": plot_h, "rooms": rooms}
+    STORAGE[lid] = {"layouts": layouts.reverse(), "plot_w": plot_w, "plot_h": plot_h, "rooms": rooms}
 
     return redirect(url_for('view_layout', lid=lid, idx=0))
 
