@@ -46,15 +46,27 @@ INDEX_HTML = '''
 
                 <div class="row">
                         <div style="flex:1">
-                                <div class="muted">Enter rooms using the fields below. Each field expects <code>id,width,height</code> (e.g. <code>1,10,12</code>).</div>
+                                <div class="muted">Enter rooms using the fields below. Each row has separate <code>width</code> and <code>height</code>. IDs are assigned automatically.</div>
                                 <div id="rooms-list" style="margin-top:8px">
-                                    <div class="room-row"><input type="text" name="room" value="1,10,12" style="width:80%"> <button type="button" class="rm-btn" onclick="removeRoom(this)">Remove</button></div>
-                                    <div class="room-row"><input type="text" name="room" value="2,15,8" style="width:80%"> <button type="button" class="rm-btn" onclick="removeRoom(this)">Remove</button></div>
-                                    <div class="room-row"><input type="text" name="room" value="3,7,14" style="width:80%"> <button type="button" class="rm-btn" onclick="removeRoom(this)">Remove</button></div>
+                                    <div class="room-row">
+                                        <label>W: <input type="number" name="room_w" value="10" min=1 style="width:96px"></label>
+                                        <label>H: <input type="number" name="room_h" value="12" min=1 style="width:96px"></label>
+                                        <button type="button" class="rm-btn" onclick="removeRoom(this)">Remove</button>
+                                    </div>
+                                    <div class="room-row">
+                                        <label>W: <input type="number" name="room_w" value="15" min=1 style="width:96px"></label>
+                                        <label>H: <input type="number" name="room_h" value="8" min=1 style="width:96px"></label>
+                                        <button type="button" class="rm-btn" onclick="removeRoom(this)">Remove</button>
+                                    </div>
+                                    <div class="room-row">
+                                        <label>W: <input type="number" name="room_w" value="7" min=1 style="width:96px"></label>
+                                        <label>H: <input type="number" name="room_h" value="14" min=1 style="width:96px"></label>
+                                        <button type="button" class="rm-btn" onclick="removeRoom(this)">Remove</button>
+                                    </div>
                                 </div>
                                 <div style="margin-top:8px">
                                     <button type="button" onclick="addRoomField()" style="background:#10b981; margin-right:8px">Add room</button>
-                                    <span class="muted">Use &quot;Add room&quot; to create more fields.</span>
+                                    <span class="muted">Use &quot;Add room&quot; to create more rows.</span>
                                 </div>
                         </div>
                 </div>
@@ -63,7 +75,8 @@ INDEX_HTML = '''
                         const list = document.getElementById('rooms-list');
                         const div = document.createElement('div');
                         div.className = 'room-row';
-                        div.innerHTML = '<input type="text" name="room" value="" style="width:80%"> <button type="button" class="rm-btn" onclick="removeRoom(this)">Remove</button>';
+                        div.style.marginBottom = '6px';
+                        div.innerHTML = '<label>W: <input type="number" name="room_w" value="10" min=1 style="width:96px"></label> <label>H: <input type="number" name="room_h" value="8" min=1 style="width:96px"></label> <button type="button" class="rm-btn" onclick="removeRoom(this)">Remove</button>';
                         list.appendChild(div);
                     }
                     function removeRoom(btn) {
@@ -72,8 +85,11 @@ INDEX_HTML = '''
                         const list = document.getElementById('rooms-list');
                         // keep at least one field
                         if (list.querySelectorAll('.room-row').length <= 1) {
-                            // clear value instead of removing
-                            row.querySelector('input[name="room"]').value = '';
+                            // clear values instead of removing
+                            const w = row.querySelector('input[name="room_w"]');
+                            const h = row.querySelector('input[name="room_h"]');
+                            if (w) w.value = '';
+                            if (h) h.value = '';
                             return;
                         }
                         row.remove();
@@ -126,7 +142,8 @@ VIEW_HTML = '''
                     {% if idx+1<total %}
                         <a class="btn" href="{{ url_for('view_layout', lid=lid, idx=idx+1) }}">Next &gt;&gt;</a>
                     {% endif %}
-                    <a class="btn secondary" href="/">Back to generator</a>
+                                <a class="btn secondary" href="/">Back to generator</a>
+                                <a class="btn secondary" href="{{ url_for('gallery', lid=lid) }}" style="margin-left:8px">Open gallery</a>
                 </div>
             </div>
             <div class="meta">
@@ -143,6 +160,52 @@ VIEW_HTML = '''
 </html>
 '''
 
+
+GALLERY_HTML = '''
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Gallery</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial; margin:20px; color:#222; }
+        .container { max-width:1100px; margin:0 auto; }
+        .grid { display:grid; grid-template-columns: repeat(5, 1fr); gap:12px; }
+        .thumb { border:1px solid #e6edf3; border-radius:8px; padding:6px; background:#fff; text-align:center; }
+        .thumb img { width:100%; height:140px; object-fit:cover; border-radius:6px; }
+        .pager { margin-top:12px; display:flex; gap:8px; align-items:center; }
+        a.btn { display:inline-block; padding:8px 12px; background:#2563eb; color:#fff; text-decoration:none; border-radius:6px; font-weight:600; }
+        a.info { color:#334155; text-decoration:none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gallery (page {{ page }} / {{ pages }})</h1>
+        <div class="grid">
+            {% for item in items %}
+                <div class="thumb">
+                    <a href="{{ url_for('view_layout', lid=lid, idx=item.index) }}"><img src="{{ url_for('layout_image', lid=lid, index=item.index) }}" alt="Layout {{ item.index+1 }}"></a>
+                    <div style="margin-top:6px"><a class="info" href="{{ url_for('view_layout', lid=lid, idx=item.index) }}">Layout {{ item.index+1 }}</a></div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="pager">
+            {% if page>1 %}
+                <a class="btn" href="{{ url_for('gallery', lid=lid, page=page-1) }}">&lt;&lt; Prev</a>
+            {% endif %}
+            <div style="flex:1"></div>
+            {% if page<pages %}
+                <a class="btn" href="{{ url_for('gallery', lid=lid, page=page+1) }}">Next &gt;&gt;</a>
+            {% endif %}
+            <a class="btn secondary" href="{{ url_for('view_layout', lid=lid, idx=0) }}" style="margin-left:12px">Open first layout</a>
+            <a class="btn secondary" href="/" style="margin-left:8px">Back to generator</a>
+        </div>
+    </div>
+</body>
+</html>
+'''
+
 @app.route('/', methods=['GET'])
 def index():
     return render_template_string(INDEX_HTML)
@@ -154,24 +217,22 @@ def generate():
     max_layouts = int(request.form.get('max_layouts') or 10)
 
     rooms = []
-    room_lines = request.form.getlist('room')
-    for line in room_lines:
-        if not line:
-            continue
-        line = line.strip()
-        parts = [p.strip() for p in line.split(',')]
-        if len(parts) < 3:
+    widths = request.form.getlist('room_w')
+    heights = request.form.getlist('room_h')
+    # zip shortest length
+    for i, (w_raw, h_raw) in enumerate(zip(widths, heights)):
+        if not w_raw and not h_raw:
             continue
         try:
-            rid = int(parts[0])
-            w = int(parts[1])
-            h = int(parts[2])
-        except ValueError:
+            w = int(w_raw)
+            h = int(h_raw)
+        except (TypeError, ValueError):
             continue
+        rid = i + 1
         rooms.append(Room(rid, w, h))
 
     if not rooms:
-        return "No valid rooms parsed. Please provide lines like: 1,10,12", 400
+        return "No valid rooms parsed. Please add at least one room with width and height.", 400
 
     layouts = generate_layouts(rooms, plot_w, plot_h, max_layouts=max_layouts, max_attempts=max_layouts*50)
 
@@ -195,6 +256,34 @@ def view_layout(lid):
     area = layout.get_room_area()
     return render_template_string(VIEW_HTML, lid=lid, idx=idx, total=len(layouts), plot_w=data['plot_w'], plot_h=data['plot_h'], rooms_count=len(layout.placed_rooms), area=area)
 
+
+@app.route('/gallery/<lid>')
+def gallery(lid):
+    data = STORAGE.get(lid)
+    if not data:
+        abort(404)
+    layouts = data['layouts']
+    if not layouts:
+        return "No layouts generated for this id.", 404
+
+    # Pagination: 10 items per page
+    per_page = 10
+    page = int(request.args.get('page', 1))
+    total = len(layouts)
+    pages = (total + per_page - 1) // per_page
+    if page < 1:
+        page = 1
+    if page > pages:
+        page = pages
+
+    start = (page - 1) * per_page
+    end = min(start + per_page, total)
+    items = []
+    for i in range(start, end):
+        items.append({"index": i})
+
+    return render_template_string(GALLERY_HTML, lid=lid, items=items, page=page, pages=pages)
+
 @app.route('/image/<lid>/<int:index>.png')
 def layout_image(lid, index):
     data = STORAGE.get(lid)
@@ -217,4 +306,4 @@ def layout_image(lid, index):
         plt.close(fig)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=False)
